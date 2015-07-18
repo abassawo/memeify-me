@@ -2,19 +2,26 @@ package accesscode.c4q.nyc.memeifyme;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
+import android.text.Layout;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -26,8 +33,18 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.widget.ViewSwitcher;
 
+import com.j256.ormlite.table.DatabaseTable;
+
+import java.lang.reflect.Array;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 
 public class Template extends ActionBarActivity {
+
+
     private Spinner drop;
     private ViewSwitcher switcher;
     private ImageView camera_image_vanilla, camera_image_demotivational;
@@ -36,71 +53,85 @@ public class Template extends ActionBarActivity {
     private ToggleButton toggle;
     private Bitmap photo;
     private static final String photoSave = "photo";
+    private DatabaseHelper mHelper;
+    private ArrayAdapter memeAdapter;
+    private List mList;
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_template);
-
         initializeViews();
         setTypeAssets();
+        mHelper = DatabaseHelper.getInstance(getApplicationContext());
+        mHelper.deleteAll();
+        new ASyncDBTask().execute();
+
+
+
 
         // Set up spinner and set drawables on select
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.memeArray, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        drop.setAdapter(adapter);
-        drop.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                String str = adapterView.getItemAtPosition(i).toString().toLowerCase();
-                Drawable d;
-                switch (str) {
-                    case "cool":
-                        d = getResources().getDrawable(R.drawable.cool);
-                        draw(d);
-                        break;
-                    case "yao ming":
-                        d = getResources().getDrawable(R.drawable.yaoming);
-                        draw(d);
-                        break;
-                    case "evil plotting raccoon":
-                        d = getResources().getDrawable(R.drawable.evilplottingraccoon);
-                        draw(d);
-                        break;
-                    case "philosoraptor":
-                        d = getResources().getDrawable(R.drawable.philosoraptor);
-                        draw(d);
-                        break;
-                    case "socially awkward penguin":
-                        d = getResources().getDrawable(R.drawable.sociallyawkwardpenguin);
-                        draw(d);
-                        break;
-                    case "success kid":
-                        d = getResources().getDrawable(R.drawable.successkid);
-                        draw(d);
-                        break;
-                    case "scumbag steve":
-                        d = getResources().getDrawable(R.drawable.scumbagsteve);
-                        draw(d);
-                        break;
-                    case "one does not simply":
-                        d = getResources().getDrawable(R.drawable.onedoesnotsimply);
-                        draw(d);
-                        break;
-                    case "i don't always":
-                        d = getResources().getDrawable(R.drawable.idontalways);
-                        draw(d);
-                        break;
-                }
+//        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.memeArray, android.R.layout.simple_spinner_item);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        drop.setAdapter(adapter);
 
-            }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
 
-            }
-        });
+
+
+//        drop.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//            @Override
+//            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+//                String str = adapterView.getItemAtPosition(i).toString().toLowerCase();
+//                Drawable d;
+//                switch (str) {
+//                    case "cool":
+//                        d = getResources().getDrawable(R.drawable.cool);
+//                        draw(d);
+//                        break;
+//                    case "yao ming":
+//                        d = getResources().getDrawable(R.drawable.yaoming);
+//                        draw(d);
+//                        break;
+//                    case "evil plotting raccoon":
+//                        d = getResources().getDrawable(R.drawable.evilplottingraccoon);
+//                        draw(d);
+//                        break;
+//                    case "philosoraptor":
+//                        d = getResources().getDrawable(R.drawable.philosoraptor);
+//                        draw(d);
+//                        break;
+//                    case "socially awkward penguin":
+//                        d = getResources().getDrawable(R.drawable.sociallyawkwardpenguin);
+//                        draw(d);
+//                        break;
+//                    case "success kid":
+//                        d = getResources().getDrawable(R.drawable.successkid);
+//                        draw(d);
+//                        break;
+//                    case "scumbag steve":
+//                        d = getResources().getDrawable(R.drawable.scumbagsteve);
+//                        draw(d);
+//                        break;
+//                    case "one does not simply":
+//                        d = getResources().getDrawable(R.drawable.onedoesnotsimply);
+//                        draw(d);
+//                        break;
+//                    case "i don't always":
+//                        d = getResources().getDrawable(R.drawable.idontalways);
+//                        draw(d);
+//                        break;
+//                }
+//
+//            }
+
+//            @Override
+//            public void onNothingSelected(AdapterView<?> adapterView) {
+//
+//            }
+//        });
 
         // Listeners to pop-up dialog and get input
         caption_top_vanilla.setOnClickListener(new View.OnClickListener() {
@@ -232,4 +263,46 @@ public class Template extends ActionBarActivity {
         builder.setView(layout);
         return builder.create();
     }
+
+    private class ASyncDBTask extends AsyncTask<Void, Void,ArrayList<Meme>>{
+
+        @Override
+        protected ArrayList<Meme> doInBackground(Void... params) {
+            mHelper = DatabaseHelper.getInstance(getApplicationContext());
+            try{
+                if (mHelper.loadData().size() == 0) {
+                    mHelper.insertRow("Cool");
+                    mHelper.insertRow("YaoMing");
+                    mHelper.insertRow("Evil");
+                    mHelper.insertRow("Philosoraptor");
+                    mHelper.insertRow("Penguin");
+                    mHelper.insertRow("SuccessKid");
+                    mHelper.insertRow("Scumbag Steve");
+                    mHelper.insertRow("One does not simply");
+                    mHelper.insertRow("I don't always");
+                    mList = mHelper.loadData();
+                }
+                    return mHelper.loadData();
+                }
+            catch (SQLException e) {
+            e.printStackTrace();
+        }
+            return null;
+
+        }
+
+
+
+        @Override
+        protected void onPostExecute(ArrayList<Meme> memes) {
+           memeAdapter = new ArrayAdapter(Template.this, android.R.layout.simple_list_item_1, memes);
+             memeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+             drop.setAdapter(memeAdapter);
+
+        }
+
+
+    }
+
+
 }

@@ -1,8 +1,12 @@
 package accesscode.c4q.nyc.memeifyme;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -13,14 +17,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btn_template;
     private Button btn_doge;
     private Button btn_exit;
+    public static final String TABLE_NAME = "tasks";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         initializeViews();
+
     }
+
 
     @Override
     public void onClick(View view) {
@@ -61,4 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_doge.setOnClickListener(this);
         btn_exit.setOnClickListener(this);
     }
+
+
+
 }
